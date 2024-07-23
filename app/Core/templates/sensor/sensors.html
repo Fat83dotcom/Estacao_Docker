@@ -1,0 +1,314 @@
+{% extends 'global/base.html' %}
+{% load static %}
+{% block content %}
+<section class="container-fluid text-center position-static">
+    <div class="m-3 text-center position-fixed top-50 start-0 translate-middle-y d-grid gap-1 col-1 mx-auto">
+        <button type="button" onclick="refresh()" class="btn btn-dark"
+        style="--bs-btn-padding-y: .15rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .50rem;"
+        >Atualizar<br>Gráficos</button>
+    </div>
+    <h2 class="text-center m-3">Sensor</h2>
+    <div class="row row-col-2">
+        <section
+            class="col d-flex align-items-start flex-column justify-content-around sensor-info-background sensor-info-format m-2">
+            <h4 class="m-3 text-center">Localização:</h4>
+            {% for data in currentSensor %}
+            <p class="m-3">{{data.id_localization.city}}</p>
+            <p class="m-3">{{data.id_localization.coordinate}}</p>
+            {% endfor %}
+        </section>
+        <section class="col sensor-info-background sensor-info-format m-2">
+            <h4 class="m-3 text-center">Trocar o sensor.</h4>
+            <form class="m-2" action="{% url 'sensor' %}" method="post">
+                {% csrf_token %}
+                <select name="selectSensor" class="form-select" aria-label="Default select example">
+                    <option selected value="default">Selecione um Sensor</option>
+                    {% for sensor in getSensors %}
+                    <option value="{{sensor.id_sen}}">{{sensor}}</option>
+                    {% endfor %}
+                </select>
+                <div class="m-3 text-center">
+                    <button type="submit" class="btn btn-dark">Buscar</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <h2 class="text-center m-3">Gráficos</h2>
+    <h2 class="text-center m-3">Registros das últimas 24 hrs.</h2>
+    <div class="spinner-border spinner-border-xl" id="spinner-end24"></div>
+    <section class="container-fluid text-center fade-sensor" id="fade-sensor24">
+        <div class="row row-col-2 m-3 d-flex  align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Temperatura</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="tempDvStdLast24"></canvas>
+                </div>
+            </section>
+            <section class="col-12">
+                <h3 class="text-center m-3">Informações de Temperatura</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="temperatureMax24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="temperatureMin24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="temperatureAverage24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="temperatureStdDeviation24">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="row m-3 d-flex align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Umidade</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="humiDvStdLast24"></canvas>
+                </div>
+            </section>
+            <section class="ol-12">
+                <h3 class="text-center m-3">Informações de Umidade</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="humidityMax24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="humidityMin24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="humidityAverage24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="humidityStdDeviation24">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="row m-3 d-flex align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Pressão</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="pressDvStdLast24"></canvas>
+                </div>
+            </section>
+            <section class="ol-12">
+                <h3 class="text-center m-3">Informações de Pressão</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="pressureMax24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="pressureMin24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="pressureAverage24">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="pressureStdDeviation24">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <h2 class="text-center mt-3">Registros os últimos 3 dias.</h2>
+    <div class="spinner-border spinner-border-xl" id="spinner-end168"></div>
+    <section class="container-fluid text-center fade-sensor" id="fade-sensor168">
+        <div class="row row-col-2 m-3 d-flex  align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Temperatura</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="tempDvStdLast168"></canvas>
+                </div>
+            </section>
+            <section class="ol-12">
+                <h3 class="text-center m-3">Informações de Temperatura</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="temperatureMax168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="temperatureMin168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Temperatura Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="temperatureAverage168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="temperatureStdDeviation168">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="row m-3 d-flex align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Umidade</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="humiDvStdLast168"></canvas>
+                </div>
+            </section>
+            <section class="ol-12">
+                <h3 class="text-center m-3">Informações de Umidade</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="humidityMax168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="humidityMin168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Umidade Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="humidityAverage168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="humidityStdDeviation168">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="row m-3 d-flex align-items-stretch">
+            <section class="ol-12">
+                <h3 class="text-center m-3">Média e Desvio Padrão Pressão</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="pressDvStdLast168"></canvas>
+                </div>
+            </section>
+            <section class="ol-12">
+                <h3 class="text-center m-3">Informações de Pressão</h3>
+                <div class="graphs-background d-flex flex-column color-text-2">
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Máxima">
+                            <i class="fa-regular fa-circle-up"></i>
+                        </span>
+                        <p id="pressureMax168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Mínima">
+                            <i class="fa-regular fa-circle-down"></i>
+                        </span>
+                        <p id="pressureMin168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Pressão Média">
+                            <i class="fa-solid fa-circle-half-stroke"></i>
+                        </span>
+                        <p id="pressureAverage168">-</p>
+                    </div>
+                    <div class="d-flex justify-content-around m-3">
+                        <span class="toolT" data-bs-placement="bottom" title="Desvio Padrão">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i>
+                        </span>
+                        <p id="pressureStdDeviation168">-</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <h2 class="text-center m-3">Dispersão Temperatura x Umidade das últimas 24 hrs.</h2>
+    <div class="spinner-border spinner-border-xl" id="spinner-endScatter24"></div>
+    <section class="container-fluid text-center fade-sensor" id="fade-scatter24">
+        <div class="row row-col-1 m-3 d-flex  align-items-stretch">
+            <section class="col-12">
+                <h3 class="text-center m-3">Dispersão Temperatura x Umidade</h3>
+                <div class="graphs-background p-3">
+                    <canvas id="scatter"></canvas>
+                </div>
+            </section>
+        </div>
+    </section>
+</section>
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="toolT"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"
+    integrity="sha512-GWzVrcGlo0TxTRvz9ttioyYJ+Wwk9Ck0G81D+eO63BaqHaJ3YZX9wuqjwgfcV/MrB2PhaVX9DkYVhbFpStnqpQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+</script>
+<!-- <script>const urlAPIGRAPH24 = "https://estacao.brainstormtech.com.br/api/data_graph_24/{{idSensor}}"</script>
+<script>const urlAPISTATS24 = "https://estacao.brainstormtech.com.br/api/data_stats_24/{{idSensor}}"</script>
+<script>const urlAPI168 = "https://estacao.brainstormtech.com.br/api/data_graph_168/{{idSensor}}"</script>
+<script>const urlAPISTATS168 = "https://estacao.brainstormtech.com.br/api/data_stats_168/{{idSensor}}"</script>
+<script>const urlAPISCATTER24 = "https://estacao.brainstormtech.com.br/api/data_scatter_24/{{idSensor}}"</script> -->
+
+
+<script>const urlAPIGRAPH24 = "http://0.0.0.0:8000/api/data_graph_24/{{idSensor}}"</script>
+<script>const urlAPISTATS24 = "http://0.0.0.0:8000/api/data_stats_24/{{idSensor}}"</script>
+<script>const urlAPI168 = "http://0.0.0.0:8000/api/data_graph_168/{{idSensor}}"</script>
+<script>const urlAPISTATS168 = "http://0.0.0.0:8000/api/data_stats_168/{{idSensor}}"</script>
+<script>const urlAPISCATTER24 = "http://0.0.0.0:8000/api/data_scatter_24/{{idSensor}}"</script>
+ 
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.3/dist/chart.umd.min.js"></script>
+<script src="{% static 'scripts/comonFunctions.js' %}"></script>
+<script src="{% static 'scripts/chartFactoryLast24.js' %}"></script>
+<script src="{% static 'scripts/chartFactoryLast168.js' %}"></script>
+<script src="{% static 'scripts/scatterFactory24.js' %}"></script>
+
+<script src="{% static 'scripts/loadGraphEngines.js' %}"></script>
+
+{% endblock %}
