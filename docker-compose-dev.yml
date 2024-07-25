@@ -50,22 +50,6 @@ services:
     volumes:
       - ./data_client:/data_client/
 
-  mosquitto:
-    hostname: mosquitto
-    container_name: mosquitto
-    image: eclipse-mosquitto:2.0.18
-    restart: always
-    volumes:
-      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./mqtt/mosquitto.passwd:/mosquitto/config/mosquitto.passwd
-      - ./mqtt/log/mosquitto.log:/mosquitto/log/mosquitto.log
-      - ./mqtt/data:/mosquitto/data
-    ports:
-      - "1883:1883"
-    # command: ["chown root /mosquitto/config/mosquitto.passwd" ,"mosquitto_passwd -U ./mosquitto/config/mosquitto.passwd"]
-    networks:
-      - internal-network
-
 networks:
   internal-network:
     driver: bridge
